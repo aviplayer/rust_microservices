@@ -1,0 +1,53 @@
+version: '3.9'
+
+networks:
+  main:
+
+volumes:
+  postgres:
+  redpanda:
+
+services:
+  postgres:
+    image: postgres:12.3-alpine
+    restart: on-failure
+    environment:
+      - POSTGRES_PASSWORD=root
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./postgres:/docker-entrypoint-initdb.d
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - 11001:5432
+    networks:
+      - main
+
+  redpanda:
+    image: vectorized/redpanda:v21.5.3
+    restart: on-failure
+    user: root
+    mem_limit: 128MB
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "info"]
+    volumes:
+      - ./redpanda:/etc/redpanda
+      - redpanda:/var/lib/redpanda/data
+    ports:
+      - 11002:11002
+    networks:
+      - main
+
+###################### Infrastructure Helpers #######################
+
+  akhq:
+    image: tchiotludo/akhq
+    restart: on-failure
+    volumes:
+      - ./akhq/application.yml:/app/application.yml
+    ports:
+      - 12002:8080
+    networks:
+      - main
+
+
+

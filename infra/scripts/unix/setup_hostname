@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+
+setup_hostname() {
+  HOSTNAME=$1
+  ENTRY=$(grep "$HOSTNAME" /etc/hosts)
+  IP=$(echo "$ENTRY" | sed -E "s/([0-9\.]*) *$HOSTNAME/\1/")
+  if [ "$ENTRY" == "" ]; then
+    echo "127.0.0.1 $LOCAL_HOSTNAME" | sudo tee -a /etc/hosts
+    echo Hostname was added
+  elif [ "$IP" != "127.0.0.1" ]; then
+    #TODO: to fix: the host is not overwritten
+    sed -E "s/([0-9\.]*) $HOSTNAME/127.0.0.1 $HOSTNAME/" /etc/hosts | sudo tee /etc/hosts
+    echo "IP was changed from ${IP:-<none>} to 127.0.0.1"
+  else
+    echo Hostname is already configured.
+  fi
+}
+
+HOSTNAMES=("$LOCAL_HOSTNAME" "redpanda")
+for HOST in "${HOSTNAMES[@]}";
+    do
+      setup_hostname "$HOST"
+    done
